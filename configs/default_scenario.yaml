@@ -1,0 +1,87 @@
+# Small (8-route) scenario: the Streamlit dashboard default and the fast
+# dev-loop / test scenario. Deliberately varied: long-haul vs short-sea,
+# tight vs loose schedules, some routes with no shore power, and different
+# allowed-fuel subsets so the optimizer faces genuine tradeoffs.
+#
+# emission_cap_tonnes_co2e values are calibrated at ~1.3x the physics-model
+# CO2e of the minimum single-vessel-class HFO deployment that satisfies each
+# route's cargo demand within schedule (see scratchpad/calibrate_scenario.py)
+# -- NOT arbitrary round numbers. This keeps the cap binding (it rules out
+# wasteful/oversized deployments and rewards slower speeds or cleaner fuels)
+# while leaving real feasible solutions for the optimizer to find.
+name: default_scenario
+carbon_price_usd_per_tonne: 50
+green_fuel_pathway: false
+
+routes:
+  - route_id: R1_ASIA_EUROPE
+    distance_nm: 10500
+    cargo_demand_tonnes: 120000
+    period_days: 30
+    max_transit_days: 35
+    allowed_fuel_types: [HFO, MDO, LNG, METHANOL]
+    shore_power_available: true
+    emission_cap_tonnes_co2e: 25000
+
+  - route_id: R2_TRANSPACIFIC
+    distance_nm: 5500
+    cargo_demand_tonnes: 90000
+    period_days: 30
+    max_transit_days: 18
+    allowed_fuel_types: [HFO, MDO, LNG]
+    shore_power_available: true
+    emission_cap_tonnes_co2e: 12000
+
+  - route_id: R3_GULF_INDIA
+    distance_nm: 2200
+    cargo_demand_tonnes: 60000
+    period_days: 30
+    max_transit_days: 10
+    allowed_fuel_types: [HFO, MDO, AMMONIA]
+    shore_power_available: false
+    emission_cap_tonnes_co2e: 11000
+
+  - route_id: R4_SHORT_SEA_BALTIC
+    distance_nm: 600
+    cargo_demand_tonnes: 20000
+    period_days: 30
+    max_transit_days: 4
+    allowed_fuel_types: [HFO, MDO, LNG, HYDROGEN]
+    shore_power_available: true
+    emission_cap_tonnes_co2e: 7500
+
+  - route_id: R5_COASTAL_FERRY
+    distance_nm: 150
+    cargo_demand_tonnes: 8000
+    period_days: 30
+    max_transit_days: 2
+    allowed_fuel_types: [HFO, MDO, HYDROGEN, LNG]
+    shore_power_available: true
+    emission_cap_tonnes_co2e: 3500
+
+  - route_id: R6_AUSTRALIA_ASIA
+    distance_nm: 4200
+    cargo_demand_tonnes: 75000
+    period_days: 30
+    max_transit_days: 16
+    allowed_fuel_types: [HFO, MDO, LNG, AMMONIA]
+    shore_power_available: false
+    emission_cap_tonnes_co2e: 12000
+
+  - route_id: R7_WEST_AFRICA
+    distance_nm: 3100
+    cargo_demand_tonnes: 40000
+    period_days: 30
+    max_transit_days: 14
+    allowed_fuel_types: [HFO, MDO]
+    shore_power_available: false
+    emission_cap_tonnes_co2e: 11500
+
+  - route_id: R8_CARIBBEAN
+    distance_nm: 1400
+    cargo_demand_tonnes: 25000
+    period_days: 30
+    max_transit_days: 7
+    allowed_fuel_types: [HFO, MDO, METHANOL]
+    shore_power_available: true
+    emission_cap_tonnes_co2e: 10000

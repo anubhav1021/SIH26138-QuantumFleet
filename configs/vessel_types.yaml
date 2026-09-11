@@ -1,0 +1,166 @@
+# Vessel class catalog: 5 vessel types x 3 size tiers = 15 classes.
+#
+# admiralty_coefficient/day_rate/aux_load scale with tier; DWT and speed
+# ranges are representative for each type. compatible_fuels reflects today's
+# real bunkering-infrastructure limits (HFO/MDO universal; LNG at Medium and
+# Large tiers; methanol/hydrogen/ammonia only where early-adopter fleets
+# exist today) so the optimizer faces genuine fuel-availability tradeoffs
+# rather than an unconstrained free choice.
+
+vessel_classes:
+  - id: CONTAINER_SMALL
+    type: Container Ship
+    tier: Small
+    dwt_tonnes: 10000
+    admiralty_coefficient: 380
+    day_rate_usd: 6000
+    min_speed_knots: 12
+    max_speed_knots: 20
+    aux_load_kw: 300
+    compatible_fuels: [HFO, MDO, HYDROGEN]
+  - id: CONTAINER_MEDIUM
+    type: Container Ship
+    tier: Medium
+    dwt_tonnes: 50000
+    admiralty_coefficient: 450
+    day_rate_usd: 12000
+    min_speed_knots: 14
+    max_speed_knots: 22
+    aux_load_kw: 800
+    compatible_fuels: [HFO, MDO, LNG, METHANOL]
+  - id: CONTAINER_LARGE
+    type: Container Ship
+    tier: Large
+    dwt_tonnes: 150000
+    admiralty_coefficient: 520
+    day_rate_usd: 20000
+    min_speed_knots: 14
+    max_speed_knots: 22
+    aux_load_kw: 1500
+    compatible_fuels: [HFO, MDO, LNG, METHANOL]
+
+  - id: BULK_SMALL
+    type: Bulk Carrier
+    tier: Small
+    dwt_tonnes: 15000
+    admiralty_coefficient: 380
+    day_rate_usd: 6000
+    min_speed_knots: 10
+    max_speed_knots: 16
+    aux_load_kw: 300
+    compatible_fuels: [HFO, MDO, HYDROGEN]
+  - id: BULK_MEDIUM
+    type: Bulk Carrier
+    tier: Medium
+    dwt_tonnes: 60000
+    admiralty_coefficient: 450
+    day_rate_usd: 12000
+    min_speed_knots: 10
+    max_speed_knots: 16
+    aux_load_kw: 800
+    compatible_fuels: [HFO, MDO, LNG, AMMONIA]
+  - id: BULK_LARGE
+    type: Bulk Carrier
+    tier: Large
+    dwt_tonnes: 180000
+    admiralty_coefficient: 520
+    day_rate_usd: 20000
+    min_speed_knots: 10
+    max_speed_knots: 16
+    aux_load_kw: 1500
+    compatible_fuels: [HFO, MDO, LNG, AMMONIA]
+
+  - id: TANKER_SMALL
+    type: Tanker
+    tier: Small
+    dwt_tonnes: 20000
+    admiralty_coefficient: 380
+    day_rate_usd: 6000
+    min_speed_knots: 10
+    max_speed_knots: 16
+    aux_load_kw: 300
+    compatible_fuels: [HFO, MDO, HYDROGEN]
+  - id: TANKER_MEDIUM
+    type: Tanker
+    tier: Medium
+    dwt_tonnes: 80000
+    admiralty_coefficient: 450
+    day_rate_usd: 12000
+    min_speed_knots: 12
+    max_speed_knots: 16
+    aux_load_kw: 800
+    compatible_fuels: [HFO, MDO, LNG, METHANOL, AMMONIA]
+  - id: TANKER_LARGE
+    type: Tanker
+    tier: Large
+    dwt_tonnes: 200000
+    admiralty_coefficient: 520
+    day_rate_usd: 20000
+    min_speed_knots: 12
+    max_speed_knots: 16
+    aux_load_kw: 1500
+    compatible_fuels: [HFO, MDO, LNG, METHANOL, AMMONIA]
+
+  - id: RORO_SMALL
+    type: RoRo
+    tier: Small
+    dwt_tonnes: 5000
+    admiralty_coefficient: 380
+    day_rate_usd: 6000
+    min_speed_knots: 14
+    max_speed_knots: 22
+    aux_load_kw: 300
+    compatible_fuels: [HFO, MDO, HYDROGEN]
+  - id: RORO_MEDIUM
+    type: RoRo
+    tier: Medium
+    dwt_tonnes: 15000
+    admiralty_coefficient: 450
+    day_rate_usd: 12000
+    min_speed_knots: 16
+    max_speed_knots: 22
+    aux_load_kw: 800
+    compatible_fuels: [HFO, MDO, LNG, HYDROGEN]
+  - id: RORO_LARGE
+    type: RoRo
+    tier: Large
+    dwt_tonnes: 30000
+    admiralty_coefficient: 520
+    day_rate_usd: 20000
+    min_speed_knots: 16
+    max_speed_knots: 22
+    aux_load_kw: 1500
+    compatible_fuels: [HFO, MDO, LNG]
+
+  - id: GENERAL_CARGO_SMALL
+    type: General Cargo
+    tier: Small
+    dwt_tonnes: 5000
+    admiralty_coefficient: 380
+    day_rate_usd: 6000
+    min_speed_knots: 10
+    max_speed_knots: 16
+    aux_load_kw: 300
+    compatible_fuels: [HFO, MDO, HYDROGEN]
+  - id: GENERAL_CARGO_MEDIUM
+    type: General Cargo
+    tier: Medium
+    dwt_tonnes: 15000
+    admiralty_coefficient: 450
+    day_rate_usd: 12000
+    min_speed_knots: 10
+    max_speed_knots: 18
+    aux_load_kw: 800
+    compatible_fuels: [HFO, MDO, LNG]
+  - id: GENERAL_CARGO_LARGE
+    type: General Cargo
+    tier: Large
+    dwt_tonnes: 35000
+    admiralty_coefficient: 520
+    day_rate_usd: 20000
+    min_speed_knots: 10
+    max_speed_knots: 18
+    aux_load_kw: 1500
+    compatible_fuels: [HFO, MDO, LNG]
+
+speed_bins_knots: [10, 12, 14, 16, 18, 20, 22]

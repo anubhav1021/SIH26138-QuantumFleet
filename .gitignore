@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+data/synthetic/*
+!data/synthetic/.gitkeep
+results/*
+!results/.gitkeep
+
+.streamlit/
+*.log
+.DS_Store
+
+# Harness-generated symlinks into .venv (not portable across machines)
+.agents/
+.claude/skills/
