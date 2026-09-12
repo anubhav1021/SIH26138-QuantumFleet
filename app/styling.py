@@ -3,18 +3,18 @@ Professional CSS styling, animations, and custom components for the Streamlit da
 """
 import streamlit as st
 
-# Professional color palette - Modern & Bright
+# Professional color palette - Warm & Elegant
 COLORS = {
-    "primary": "#0099FF",      # Bright electric blue
-    "secondary": "#00D4FF",    # Cyan/turquoise
-    "accent": "#FF6B35",       # Vibrant coral-orange
-    "light_bg": "#F8FBFF",     # Very light blue-white
-    "surface": "#E8F4FF",      # Light sky blue
-    "success": "#00B894",      # Fresh green
-    "warning": "#FF7675",      # Coral red
-    "text": "#0A1628",         # Dark blue-black
-    "text_light": "#4A5568",   # Medium gray
-    "border": "#B3D9FF",       # Light blue border
+    "primary": "#1A3A52",      # Dark navy blue
+    "secondary": "#2E8567",    # Teal/sea green
+    "accent": "#D6A34C",       # Warm brass/gold
+    "light_bg": "#F5F1E8",     # Warm cream-white
+    "surface": "#EDE9E0",      # Soft cream
+    "success": "#27AE60",      # Green
+    "warning": "#E74C3C",      # Red
+    "text": "#1A1A1A",         # Dark text
+    "text_light": "#555555",   # Gray text
+    "border": "#D4CEBF",       # Warm beige border
 }
 
 def apply_professional_styling():
@@ -29,7 +29,7 @@ def apply_professional_styling():
         }}
 
         html, body, [data-testid="stAppViewContainer"] {{
-            background: linear-gradient(135deg, {COLORS["light_bg"]} 0%, #F8FAFF 100%);
+            background: linear-gradient(135deg, {COLORS["light_bg"]} 0%, {COLORS["surface"]} 100%);
             color: {COLORS["text"]};
         }}
 
@@ -136,9 +136,9 @@ def apply_professional_styling():
 
         /* ==================== SIDEBAR STYLING ==================== */
         [data-testid="stSidebar"] {{
-            background: linear-gradient(180deg, #FFFFFF 0%, {COLORS["surface"]} 100%);
+            background: linear-gradient(180deg, {COLORS["light_bg"]} 0%, {COLORS["surface"]} 100%);
             color: {COLORS["text"]};
-            border-right: 2px solid {COLORS["border"]};
+            border-right: 3px solid {COLORS["accent"]};
         }}
 
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{
@@ -229,8 +229,8 @@ def apply_professional_styling():
         [data-testid="stNumberInput"] input:focus,
         [data-testid="stSelectbox"] select:focus,
         [data-testid="stTextArea"] textarea:focus {{
-            border-color: {COLORS["primary"]} !important;
-            box-shadow: 0 0 0 3px rgba(0, 153, 255, 0.1) !important;
+            border-color: {COLORS["accent"]} !important;
+            box-shadow: 0 0 0 3px rgba(214, 163, 76, 0.15) !important;
             background-color: #FFFFFF !important;
         }}
 
