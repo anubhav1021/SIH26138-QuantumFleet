@@ -22,6 +22,7 @@ import streamlit as st
 
 import analysis_ui
 import scenario_builder_ui as builder_ui
+import styling
 from quantumfleet.benchmarking.baselines_optimization import ClassicalGeneticAlgorithm, run_greedy_heuristic, run_random_search
 from quantumfleet.benchmarking.baselines_prediction import physics_baseline_predictions
 from quantumfleet.data_generation.generator import generate_voyage_records
@@ -47,7 +48,10 @@ from quantumfleet.reporting.report_builder import build_report, per_assignment_b
 from quantumfleet.scenarios.repository import ScenarioRepository, VesselCatalogRepository
 from quantumfleet.scenarios.validation import has_errors, validate_scenario_feasibility
 
-st.set_page_config(page_title="Quantum-Inspired Green Fleet Optimizer", layout="wide")
+st.set_page_config(page_title="Quantum-Inspired Green Fleet Optimizer", layout="wide", initial_sidebar_state="expanded")
+
+# Apply professional styling
+styling.apply_professional_styling()
 
 CONFIGS_DIR = PROJECT_ROOT / "configs"
 scenario_repo = ScenarioRepository(builtin_dir=CONFIGS_DIR, user_dir=CONFIGS_DIR / "user_scenarios")
@@ -76,15 +80,18 @@ def _weighted_best_entry(archive, w_fuel: float, w_co2e: float, w_cost: float):
     return archive.entries[score.idxmin()]
 
 
-st.title("Quantum-Inspired Fuel Consumption Prediction & Green Fleet Optimization")
-st.caption("SIH26138 -- decision-support platform for fleet deployment, alternative fuels, and emissions scenario analysis.")
+styling.render_header(
+    "Quantum Fleet Optimizer",
+    "SIH26138 – Decision-support platform for fleet deployment, alternative fuels & emissions analysis",
+    "🚢"
+)
 
 all_scenario_summaries = scenario_repo.list_all()
 scenario_option_labels = {f"{s.name}  ({'built-in' if s.is_builtin else 'yours'}, {s.n_routes} routes)": s.key for s in all_scenario_summaries}
 scenario_keys_in_order = list(scenario_option_labels.values())
 
 with st.sidebar:
-    st.header("Scenario")
+    st.markdown("#### ⚙️ Configuration", unsafe_allow_html=True)
     default_key = st.session_state.get("active_scenario_key", scenario_keys_in_order[0])
     default_index = scenario_keys_in_order.index(default_key) if default_key in scenario_keys_in_order else 0
     scenario_label = st.selectbox("Scenario", list(scenario_option_labels.keys()), index=default_index)
@@ -133,16 +140,22 @@ tab_builder, tab_fleet, tab_results, tab_whatif, tab_scenario, tab_prediction, t
 )
 
 with tab_builder:
-    st.write("Create, edit, duplicate, or delete scenarios -- no YAML editing required. Saved scenarios appear in the sidebar selector immediately, exactly like the built-in ones.")
+    st.subheader("📝 Scenario Builder")
+    st.write("Create, edit, duplicate, or delete scenarios – no YAML editing required. Saved scenarios appear in the sidebar immediately.")
     builder_ui.render_scenario_builder(scenario_repo, problem.vessel_classes, list(problem.speed_bins_knots))
 
 with tab_fleet:
-    st.write("Add, edit, duplicate, or delete vessel classes. Built-in vessel classes can't be modified or removed, but your custom ones are used by the optimizer exactly the same way.")
+    st.subheader("⛴️ Fleet Editor")
+    st.write("Add, edit, duplicate, or delete vessel classes. Custom vessels are used by the optimizer exactly like built-in ones.")
     builder_ui.render_fleet_editor(vessel_repo, list(problem.speed_bins_knots))
 
 with tab_results:
     if "archive" not in st.session_state:
-        st.info("Configure a scenario in the sidebar and click **Run optimization** to see results.")
+        styling.render_info_box(
+            "Configure a scenario in the sidebar and click **Run optimization** to see results.",
+            icon="🎯",
+            box_type="info"
+        )
     else:
         archive = st.session_state["archive"]
         history = st.session_state["history"]
@@ -155,13 +168,17 @@ with tab_results:
         c3.metric("Final hypervolume", f"{history[-1].hypervolume:,.0f}")
 
         if len(archive) == 1:
-            st.info("Only one non-dominated solution survived. That usually means the constraints and objectives left little room for tradeoffs -- check the Scenario Builder tab for feasibility warnings, or widen the schedule/emission cap to open up more options.")
+            styling.render_info_box(
+                "Only one non-dominated solution survived. Check the Scenario Builder tab for feasibility warnings, or widen the schedule/emission cap to open up more options.",
+                icon="⚠️",
+                box_type="warning"
+            )
 
         st.plotly_chart(pareto_front_scatter_3d(archive), width="stretch")
         st.plotly_chart(convergence_line_chart({"Quantum-Inspired (QEA)": history}), width="stretch")
 
-        st.subheader("Compare Pareto extremes")
-        st.caption("The single archive members that minimize each objective on its own -- a quick way to see the range of the tradeoff before picking a priority below.")
+        st.subheader("⚖️ Compare Pareto Extremes")
+        st.caption("The single archive members that minimize each objective independently – a quick way to see the range of tradeoffs before picking a priority.")
         extremes = pick_extreme_solutions(archive)
         ext_cols = st.columns(3)
         for col, label, key in [(ext_cols[0], "Lowest fuel", "lowest_fuel"), (ext_cols[1], "Lowest cost", "lowest_cost"), (ext_cols[2], "Lowest emissions", "lowest_emissions")]:
@@ -169,7 +186,7 @@ with tab_results:
             if entry is not None:
                 col.metric(label, f"{entry.objectives.fuel_tonnes:,.0f} t fuel", f"${entry.objectives.cost_usd:,.0f} / {entry.objectives.co2e_tonnes:,.0f} t CO2e")
 
-        st.subheader("Optimization priority")
+        st.subheader("🎯 Optimization Priority")
         priority_presets = {
             "Balanced": (1 / 3, 1 / 3, 1 / 3),
             "Lowest fuel": (1.0, 0.0, 0.0),
@@ -191,9 +208,13 @@ with tab_results:
         summary = plan_summary_metrics(selected.plan, o, run_problem)
 
         st.divider()
-        st.subheader("Recommended fleet plan")
+        st.subheader("📦 Recommended Fleet Plan")
         if o.violation > 1e-9:
-            st.warning(f"This is the LEAST INFEASIBLE plan found (violation score {o.violation:.3f}), not a feasible one.")
+            styling.render_info_box(
+                f"This is the LEAST INFEASIBLE plan found (violation score {o.violation:.3f}), not a feasible one.",
+                icon="⚠️",
+                box_type="warning"
+            )
             st.write("**Why it's infeasible:**")
             for reason in explain_infeasibility(summary["route_feasibilities"]):
                 st.write(f"- {reason}")
@@ -218,13 +239,13 @@ with tab_results:
         if not plan_df.empty:
             st.plotly_chart(emissions_by_fuel_bar(plan_df), width="stretch")
 
-        st.subheader("Why this plan")
+        st.subheader("💡 Why This Plan")
         for line in explain_why_plan_chosen(o, summary["route_feasibilities"], archive, selected):
             st.write(line)
 
         st.divider()
-        st.subheader("Baseline vs. optimized")
-        st.caption("Baseline = a greedy, single-vessel-type-per-route heuristic (conventional route planning, no metaheuristic search) -- see docs/algorithm_details.md.")
+        st.subheader("📊 Baseline vs. Optimized")
+        st.caption("Baseline = a greedy, single-vessel-type-per-route heuristic (conventional route planning). See docs/algorithm_details.md for details.")
         if st.button("Compute baseline comparison"):
             with st.spinner("Running the greedy baseline heuristic..."):
                 st.session_state["baseline_comparison"] = compare_baseline_vs_optimized(run_problem, o)
@@ -258,7 +279,7 @@ with tab_whatif:
     analysis_ui.render_what_if(problem, population_size, n_generations, int(seed))
 
 with tab_scenario:
-    st.subheader(f"Routes in '{problem.scenario.name}'")
+    st.subheader(f"🗺️ Routes in '{problem.scenario.name}'")
 
     route_map_fig = route_map(list(problem.scenario.routes))
     if route_map_fig is not None:
@@ -280,14 +301,15 @@ with tab_scenario:
     rc7.metric("Shore power", "Available" if selected_route.shore_power_available else "Not available")
     st.caption(f"Allowed fuels: {', '.join(selected_route.allowed_fuel_types)}")
 
-    st.subheader("All routes")
+    st.subheader("📋 All Routes")
     routes_df = pd.DataFrame([r.__dict__ for r in problem.scenario.routes])
     st.dataframe(routes_df, width="stretch")
-    st.subheader("Vessel class catalog")
+    st.subheader("🚢 Vessel Class Catalog")
     vessels_df = pd.DataFrame([v.__dict__ for v in problem.vessel_classes.values()])
     st.dataframe(vessels_df, width="stretch")
 
 with tab_prediction:
+    st.subheader("🤖 Prediction Model")
     st.write("Generate a synthetic voyage dataset and train the fuel-consumption prediction models.")
     n_vessels = st.slider("Synthetic vessels", 20, 300, 150, key="pred_n_vessels")
     legs = st.slider("Legs per vessel", 5, 40, 20, key="pred_legs")
@@ -328,7 +350,7 @@ with tab_prediction:
         st.dataframe(st.session_state["prediction_results"].style.format("{:.4f}"), width="stretch")
 
         detail = st.session_state["prediction_detail"]
-        st.subheader("Residual analysis: is there a learnable physics-model bias?")
+        st.subheader("📈 Residual Analysis")
         r2 = detail["residual_r2"]
         if r2 < 0.1:
             st.info(f"Cross-validated R² of predicting (actual - physics) from features: **{r2:.3f}** -- near zero or negative, meaning the residual is essentially unpredictable noise here. The hybrid model performs on par with physics alone on this synthetic data; see docs/algorithm_details.md for why, and why this is expected to differ on real voyage data.")
@@ -343,6 +365,7 @@ with tab_prediction:
             st.plotly_chart(feature_importance_bar(detail["rf_model"].feature_importances_, detail["feature_names"]), width="stretch")
 
 with tab_benchmark:
+    st.subheader("🔬 Benchmarking")
     st.write("Compare the quantum-inspired optimizer against classical baselines on the same scenario (a small, fast configuration for interactive use).")
     bench_routes = st.slider("Routes for this comparison", 2, 20, 5, key="bench_routes")
     bench_pop = st.slider("Population", 10, 60, 20, key="bench_pop")
@@ -374,22 +397,16 @@ with tab_benchmark:
         )
 
 with tab_about:
-    st.markdown(
-        """
-### Methodology
+    st.subheader("📚 Methodology")
 
-- **Fuel prediction**: an Admiralty-formula physics baseline plus a Random-Forest / Gradient-Boosting
-  data-driven model, with hyperparameters tuned by Quantum-behaved Particle Swarm Optimization (QPSO).
-- **Optimization formulation**: decision variables are vessel mix, capacity, cruising speed, fuel type,
-  and shore-power use per route; objectives are fuel, lifecycle CO2e, and cost; constraints are cargo
-  demand, schedule reliability, and emission caps.
-- **Quantum-inspired engine**: a qubit-encoded evolutionary algorithm (rotation-gate updates,
-  quantum-NOT mutation) driving an external Pareto archive, with a composite-leader recombination step
-  and a catastrophe operator for population diversity.
-- **Benchmarking**: the same encoding, constraints, and archive power a classical genetic algorithm,
-  random search, and a greedy single-vessel-type heuristic, so comparisons isolate what the
-  quantum-inspired mechanism specifically contributes.
+    # Render methodology sections with styling
+    sections = [
+        ("⚛️ Fuel Prediction", "Physics baseline (Admiralty formula) + ML models (Random Forest / Gradient Boosting) with hyperparameters tuned by Quantum-behaved Particle Swarm Optimization (QPSO)."),
+        ("🎯 Optimization Formulation", "Decision variables: vessel mix, capacity, cruising speed, fuel type, shore-power use per route. Objectives: fuel, lifecycle CO₂e, cost. Constraints: cargo demand, schedule reliability, emission caps."),
+        ("🔬 Quantum-Inspired Engine", "Qubit-encoded evolutionary algorithm with rotation-gate updates, quantum-NOT mutation, external Pareto archive, composite-leader recombination, and catastrophe operator for diversity."),
+        ("📊 Benchmarking", "Same encoding, constraints, and archive power classical GA, random search, and greedy heuristic for fair comparisons isolating the quantum-inspired mechanism's contribution."),
+    ]
 
-See `docs/algorithm_details.md` and `docs/implementation_guide.md` for full detail.
-        """
-    )
+    for title, content in sections:
+        st.markdown(f"**{title}**")
+        st.write(content)
