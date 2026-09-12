@@ -3,18 +3,18 @@ Professional CSS styling, animations, and custom components for the Streamlit da
 """
 import streamlit as st
 
-# Professional color palette
+# Professional color palette - Modern & Bright
 COLORS = {
-    "primary": "#0F2A3D",      # Navy blue
-    "secondary": "#2E8567",    # Sea green
-    "accent": "#D6A34C",       # Brass gold
-    "light_bg": "#F1F4F0",     # Off-white
-    "surface": "#E3E9DF",      # Light green-gray
-    "success": "#27AE60",      # Green
-    "warning": "#E74C3C",      # Red
-    "text": "#1A1A1A",         # Dark text
-    "text_light": "#555555",   # Gray text
-    "border": "#BDC3C7",       # Light gray border
+    "primary": "#0099FF",      # Bright electric blue
+    "secondary": "#00D4FF",    # Cyan/turquoise
+    "accent": "#FF6B35",       # Vibrant coral-orange
+    "light_bg": "#F8FBFF",     # Very light blue-white
+    "surface": "#E8F4FF",      # Light sky blue
+    "success": "#00B894",      # Fresh green
+    "warning": "#FF7675",      # Coral red
+    "text": "#0A1628",         # Dark blue-black
+    "text_light": "#4A5568",   # Medium gray
+    "border": "#B3D9FF",       # Light blue border
 }
 
 def apply_professional_styling():
@@ -136,30 +136,32 @@ def apply_professional_styling():
 
         /* ==================== SIDEBAR STYLING ==================== */
         [data-testid="stSidebar"] {{
-            background: linear-gradient(180deg, {COLORS["primary"]} 0%, {COLORS["primary"]}dd 100%);
-            color: white;
+            background: linear-gradient(180deg, #FFFFFF 0%, {COLORS["surface"]} 100%);
+            color: {COLORS["text"]};
+            border-right: 2px solid {COLORS["border"]};
         }}
 
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{
-            color: white;
+            color: {COLORS["text"]};
         }}
 
         [data-testid="stSidebar"] h1,
         [data-testid="stSidebar"] h2,
         [data-testid="stSidebar"] h3 {{
-            color: {COLORS["accent"]};
+            color: {COLORS["primary"]};
             background: none;
             -webkit-text-fill-color: unset;
         }}
 
         [data-testid="stSidebar"] label {{
-            color: white;
+            color: {COLORS["text"]};
             font-weight: 500;
         }}
 
         [data-testid="stSidebar"] [role="option"] {{
-            background-color: {COLORS["secondary"]};
+            background-color: {COLORS["primary"]};
             color: white;
+            border-radius: 6px;
         }}
 
         /* ==================== BUTTON STYLING ==================== */
