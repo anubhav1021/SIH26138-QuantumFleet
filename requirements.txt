@@ -5,5 +5,9 @@ matplotlib>=3.8
 plotly>=5.20
 streamlit>=1.50
 pyyaml>=6.0
+# Offline marine-network router: resolves port pairs to real sea distances
+# (around land, through the right canals). Bundles its own geodata, so there
+# is no runtime API call.
+searoute>=1.6
 joblib>=1.4
 pytest>=8.0

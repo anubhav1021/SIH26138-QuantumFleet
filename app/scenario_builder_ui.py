@@ -12,7 +12,9 @@ import streamlit as st
 
 from quantumfleet.fuels.properties import PROPULSION_FUELS
 from quantumfleet.optimization.problem import parse_scenario
+from quantumfleet.reporting.ports import MAJOR_PORTS, resolve_port_coordinates
 from quantumfleet.scenarios.repository import ScenarioRepository, VesselCatalogRepository
+from quantumfleet.scenarios.sea_distance import sea_distance_nm
 from quantumfleet.scenarios.validation import (
     has_errors,
     validate_scenario_dict,
@@ -181,6 +183,80 @@ def render_scenario_builder(scenario_repo: ScenarioRepository, vessel_classes: d
             st.error(str(e))
 
 
+_PORT_EXAMPLES = "Shanghai, Singapore, Rotterdam, Mumbai, Chennai, Hong Kong, Dubai, New York, Los Angeles"
+
+_PORT_HELP = (
+    "Type a major port name -- a port, not a country. When both ports are recognized, "
+    "the distance below is filled in automatically from the real sea route (around land "
+    "and through the appropriate canal or strait), and the route appears on the map in "
+    f"Scenario & routes. Recognized names include: {_PORT_EXAMPLES}. An unrecognized name "
+    "is still accepted; you just set the distance yourself and the route won't be mapped."
+)
+
+
+def _sync_sea_distance(route: dict, i: int) -> float | None:
+    """Auto-fill `distance_nm` when the user switches to a recognized port pair.
+
+    Returns the sea distance for the current pair, or None if either port is
+    unknown. Must be called BEFORE the distance number_input is created: it
+    writes into that widget's session-state slot, which Streamlit reads when
+    instantiating the widget.
+    """
+    origin = route.get("origin_port") or ""
+    destination = route.get("destination_port") or ""
+    pair = (origin.strip().lower(), destination.strip().lower())
+    pair_key = f"route_{i}_portpair"
+    computed = sea_distance_nm(origin, destination)
+
+    # The "use this distance" button fires after the distance widget already
+    # exists, and Streamlit forbids writing a widget's session-state slot once
+    # instantiated. So the button only records an intent and reruns; the write
+    # itself happens here, before the widget is built.
+    pending = st.session_state.pop(f"route_{i}_pending_dist", None)
+    if pending is not None:
+        st.session_state[f"route_{i}_dist"] = pending
+        route["distance_nm"] = pending
+
+    if pair_key not in st.session_state:
+        # First render of this route -- typically loaded from a saved scenario.
+        # Adopt whatever distance it already has instead of overwriting a
+        # deliberately stored value on mere page load.
+        st.session_state[pair_key] = pair
+    elif st.session_state[pair_key] != pair:
+        st.session_state[pair_key] = pair
+        if computed is not None:
+            st.session_state[f"route_{i}_dist"] = round(computed, 1)
+            route["distance_nm"] = round(computed, 1)
+    return computed
+
+
+def _render_sea_distance_note(route: dict, i: int, computed: float | None) -> None:
+    """Explain where the distance came from, or why it could not be filled in."""
+    origin = (route.get("origin_port") or "").strip()
+    destination = (route.get("destination_port") or "").strip()
+    if not origin or not destination:
+        return
+
+    unknown = [name for name in (origin, destination) if resolve_port_coordinates(name) is None]
+    if unknown:
+        names = " and ".join(f"'{name}'" for name in unknown)
+        st.caption(f":material/help: {names} is not a known port, so the distance stays manual. Recognized names include: {_PORT_EXAMPLES}.")
+        return
+
+    current = float(route.get("distance_nm") or 0.0)
+    if abs(current - computed) <= 1.0:
+        st.caption(f":material/route: Sea route {origin} → {destination}: **{computed:,.0f} nm**, filled in automatically.")
+        return
+
+    # The field was edited by hand after the auto-fill. Leave it alone, but
+    # offer a one-click way back to the computed value.
+    note_col, button_col = st.columns([3, 1])
+    note_col.caption(f":material/route: The sea route {origin} → {destination} is **{computed:,.0f} nm**, but this field says {current:,.0f} nm.")
+    if button_col.button(f"Use {computed:,.0f} nm", key=f"route_{i}_usedist"):
+        st.session_state[f"route_{i}_pending_dist"] = round(computed, 1)
+        st.rerun()
+
+
 def _render_routes_editor(draft: dict) -> None:
     routes = draft["routes"]
     to_delete = None
@@ -192,12 +268,15 @@ def _render_routes_editor(draft: dict) -> None:
             route["route_id"] = st.text_input("Route ID (unique)", value=route.get("route_id", ""), key=f"route_{i}_id")
 
             pc1, pc2 = st.columns(2)
-            route["origin_port"] = pc1.text_input("Origin port (optional)", value=route.get("origin_port") or "", key=f"route_{i}_origin", help="Type a major port name (e.g. Shanghai, Rotterdam, Singapore) to show this route on the map in Scenario & Routes. Unrecognized names just won't appear on the map -- everything else about the route still works.")
-            route["destination_port"] = pc2.text_input("Destination port (optional)", value=route.get("destination_port") or "", key=f"route_{i}_dest", help="Same as origin port -- a recognized major port name enables the map.")
+            route["origin_port"] = pc1.text_input("Origin port (optional)", value=route.get("origin_port") or "", key=f"route_{i}_origin", help=_PORT_HELP)
+            route["destination_port"] = pc2.text_input("Destination port (optional)", value=route.get("destination_port") or "", key=f"route_{i}_dest", help=_PORT_HELP)
+
+            sea_distance = _sync_sea_distance(route, i)
 
             nc1, nc2 = st.columns(2)
             route["distance_nm"] = nc1.number_input("Distance (nautical miles)", min_value=0.0, value=float(route.get("distance_nm", 0.0)), key=f"route_{i}_dist")
             route["cargo_demand_tonnes"] = nc2.number_input("Cargo demand (tonnes per period)", min_value=0.0, value=float(route.get("cargo_demand_tonnes", 0.0)), key=f"route_{i}_demand")
+            _render_sea_distance_note(route, i, sea_distance)
 
             nc3, nc4 = st.columns(2)
             route["period_days"] = nc3.number_input("Planning period (days)", min_value=0.0, value=float(route.get("period_days", 30.0)), key=f"route_{i}_period")
