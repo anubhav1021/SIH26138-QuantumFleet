@@ -12,6 +12,7 @@ from quantumfleet.optimization.pareto import ParetoArchive
 from quantumfleet.optimization.problem import ProblemSpec
 from quantumfleet.optimization.qea import GenerationStats, evaluate_single_assignment
 from quantumfleet.reporting.charts import save_static_convergence, save_static_pareto_front
+from quantumfleet.reporting.explain import compare_baseline_vs_optimized, explain_infeasibility, explain_why_plan_chosen, plan_summary_metrics
 
 
 def plan_to_dataframe(plan: FleetPlan) -> pd.DataFrame:
@@ -95,6 +96,7 @@ def build_report(
     feasible = [e for e in archive.entries if e.objectives.violation <= 1e-9]
     best = min(feasible, key=lambda e: e.objectives.cost_usd) if feasible else min(archive.entries, key=lambda e: e.objectives.violation)
     recommendation_heading = "## Recommended plan (lowest cost among feasible solutions)" if feasible else "## Best plan found (lowest constraint violation -- no fully feasible plan found)"
+    summary = plan_summary_metrics(best.plan, best.objectives, problem)
 
     lines = [
         f"# {title}",
@@ -116,12 +118,44 @@ def build_report(
         "",
         f"- Fuel: **{best.objectives.fuel_tonnes:,.1f} t**",
         f"- Lifecycle CO2e: **{best.objectives.co2e_tonnes:,.1f} t**",
-        f"- Total cost: **${best.objectives.cost_usd:,.0f}**",
+        f"- Total cost: **${best.objectives.cost_usd:,.0f}** (of which carbon cost: ${summary['carbon_cost_usd']:,.0f})",
+        f"- Cargo fulfillment: **{summary['cargo_fulfillment_pct']:.0f}%** average across routes",
+        f"- Schedule met on **{summary['schedule_compliant_routes']}/{summary['n_routes']}** routes; emission cap respected on **{summary['emission_compliant_routes']}/{summary['n_routes']}** routes",
+        f"- Vessels deployed: **{summary['vessels_used']}**; fuel mix: {', '.join(f'{fuel} x{count}' for fuel, count in summary['fuel_mix'].items()) or '(none)'}",
         f"- Constraint violation: **{best.objectives.violation:.4f}**",
         "",
         "### Fleet allocation",
         "",
         _markdown_table(per_assignment_breakdown(best.plan, problem).round(1)),
+        "",
+        "### Why this plan",
+        "",
+    ]
+    lines += [f"- {line}" for line in explain_why_plan_chosen(best.objectives, summary["route_feasibilities"], archive, best)]
+
+    if best.objectives.violation > 1e-9:
+        lines += ["", "### Why it's infeasible", ""]
+        lines += [f"- {reason}" for reason in explain_infeasibility(summary["route_feasibilities"])]
+
+    baseline = compare_baseline_vs_optimized(problem, best.objectives)
+    lines += ["", "### Baseline vs. optimized", "", "Baseline = a greedy, single-vessel-type-per-route heuristic (conventional route planning, no metaheuristic search).", ""]
+    baseline_rows = []
+    for label, key, pct_key in [("Fuel (t)", "fuel_tonnes", "fuel_improvement_pct"), ("CO2e (t)", "co2e_tonnes", "co2e_improvement_pct"), ("Cost (USD)", "cost_usd", "cost_improvement_pct")]:
+        baseline_v, optimized_v, pct = getattr(baseline["baseline"], key), getattr(baseline["optimized"], key), baseline[pct_key]
+        baseline_rows.append({"Metric": label, "Baseline (greedy)": round(baseline_v, 1), "Quantum-inspired": round(optimized_v, 1), "% improvement": f"{pct:+.1f}%" if pct is not None else "N/A"})
+    lines.append(_markdown_table(pd.DataFrame(baseline_rows)))
+
+    lines += [
+        "",
+        "### Important assumptions",
+        "",
+        "- Fuel properties (LHV, density, well-to-wake CO2e, indicative prices) are representative values assembled "
+        "from standard maritime-engineering and IMO/EU GHG literature orders of magnitude -- internally consistent, "
+        "but not citation-pinned. See `src/quantumfleet/fuels/properties.py`.",
+        "- The physics model (Admiralty-coefficient method) is a long-standing empirical naval-architecture "
+        "approximation, not a first-principles hydrodynamic computation.",
+        "- No real voyage dataset was available for this problem statement; the fuel-prediction models are trained "
+        "on a physics-informed synthetic generator (see `docs/implementation_guide.md`).",
         "",
     ]
 

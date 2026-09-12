@@ -15,6 +15,7 @@ from quantumfleet.data_generation.generator import generate_voyage_records
 from quantumfleet.data_generation.validate import assert_valid_voyage_records
 from quantumfleet.prediction.evaluate import compare_models, regression_metrics
 from quantumfleet.prediction.features import build_feature_matrix, build_target, make_encoder, train_test_split_by_vessel
+from quantumfleet.prediction.hybrid_model import HybridFuelPredictionModel, residual_learnability_r2
 from quantumfleet.prediction.ml_model import FuelPredictionModel
 from quantumfleet.prediction.physics_model import load_vessel_catalog
 from quantumfleet.prediction.qpso_tuner import DEFAULT_RF_BOUNDS, quantum_pso_tune, rf_cv_rmse_objective
@@ -81,6 +82,18 @@ def main() -> None:
         results["Random Forest + QPSO"] = regression_metrics(y_test, qpso_rf.predict(X_test))
         if results["Random Forest + QPSO"]["RMSE"] < results["Random Forest"]["RMSE"]:
             best_model = qpso_rf
+
+    log.info("Training hybrid physics+ML residual-correction model...")
+    hybrid = HybridFuelPredictionModel().fit(train_df, X_train, vessel_classes)
+    results["Hybrid (physics + RF residual)"] = regression_metrics(y_test, hybrid.predict(test_df, X_test, vessel_classes))
+    residual_r2 = residual_learnability_r2(train_df, X_train, vessel_classes)
+    log.info(
+        "Residual learnability (CV R2 of predicting actual-physics from features): %.3f -- %s",
+        residual_r2,
+        "near zero/negative: little systematic bias for the hybrid model to correct on this synthetic data"
+        if residual_r2 < 0.1
+        else "meaningfully positive: the hybrid model is capturing a real systematic bias",
+    )
 
     table = compare_models(results)
     print("\nPrediction accuracy comparison (held-out test set):\n")

@@ -110,24 +110,31 @@ def auxiliary_fuel_consumption_at_berth(
     return FuelPrediction(power_kw=vessel.aux_load_kw, duration_hours=berth_hours, fuel_tonnes=fuel_kg / 1000.0, co2e_tonnes=co2e_kg / 1000.0)
 
 
+def parse_vessel_class(entry: dict) -> VesselClass:
+    """Builds one VesselClass from a raw dict -- the single place that knows
+    how a raw vessel dict becomes a `VesselClass`, shared by file-based
+    catalog loading and the Fleet Editor UI."""
+    return VesselClass(
+        id=entry["id"],
+        type=entry["type"],
+        tier=entry["tier"],
+        dwt_tonnes=float(entry["dwt_tonnes"]),
+        admiralty_coefficient=float(entry["admiralty_coefficient"]),
+        day_rate_usd=float(entry["day_rate_usd"]),
+        min_speed_knots=float(entry["min_speed_knots"]),
+        max_speed_knots=float(entry["max_speed_knots"]),
+        aux_load_kw=float(entry["aux_load_kw"]),
+        compatible_fuels=tuple(entry["compatible_fuels"]),
+    )
+
+
+def parse_vessel_catalog(raw: dict) -> tuple[dict[str, VesselClass], list[float]]:
+    vessel_classes = {entry["id"]: parse_vessel_class(entry) for entry in raw["vessel_classes"]}
+    speed_bins = [float(s) for s in raw["speed_bins_knots"]]
+    return vessel_classes, speed_bins
+
+
 def load_vessel_catalog(path: str) -> tuple[dict[str, VesselClass], list[float]]:
     """Load the vessel-class catalog and global speed bins from a YAML config
     (see configs/vessel_types.yaml). Returns (vessel_classes_by_id, speed_bins_knots)."""
-    raw = load_yaml(path)
-    vessel_classes = {
-        entry["id"]: VesselClass(
-            id=entry["id"],
-            type=entry["type"],
-            tier=entry["tier"],
-            dwt_tonnes=float(entry["dwt_tonnes"]),
-            admiralty_coefficient=float(entry["admiralty_coefficient"]),
-            day_rate_usd=float(entry["day_rate_usd"]),
-            min_speed_knots=float(entry["min_speed_knots"]),
-            max_speed_knots=float(entry["max_speed_knots"]),
-            aux_load_kw=float(entry["aux_load_kw"]),
-            compatible_fuels=tuple(entry["compatible_fuels"]),
-        )
-        for entry in raw["vessel_classes"]
-    }
-    speed_bins = [float(s) for s in raw["speed_bins_knots"]]
-    return vessel_classes, speed_bins
+    return parse_vessel_catalog(load_yaml(path))

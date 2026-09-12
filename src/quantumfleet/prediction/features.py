@@ -40,5 +40,12 @@ def build_feature_matrix(df: pd.DataFrame, encoder: OneHotEncoder) -> np.ndarray
     return np.hstack([numeric_matrix, cat_matrix])
 
 
+def feature_names(encoder: OneHotEncoder) -> list[str]:
+    """Column names for `build_feature_matrix`'s output, in the same
+    numeric-then-categorical order -- for feature-importance plots, since
+    the raw feature matrix is otherwise just an unlabeled array of columns."""
+    return list(NUMERIC_FEATURES) + list(encoder.get_feature_names_out(CATEGORICAL_FEATURES))
+
+
 def build_target(df: pd.DataFrame) -> np.ndarray:
     return df[C.TARGET_COLUMN].to_numpy(dtype=float)

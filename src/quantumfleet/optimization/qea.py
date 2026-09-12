@@ -32,6 +32,7 @@ from quantumfleet.prediction.physics_model import VoyageConditions, auxiliary_fu
 
 DEFAULT_LOAD_FACTOR_ASSUMPTION = 0.85
 THETA_MIN = 0.02  # radians; keeps cos^2(theta) within roughly [4e-4, 0.9996], avoiding premature convergence
+OBJECTIVE_KEYS = ("fuel_tonnes", "co2e_tonnes", "cost_usd")  # Objectives field names used for per-objective composite-leader tracking
 
 
 def evaluate_single_assignment(a: Assignment, route: Route, problem: ProblemSpec) -> Objectives | None:
@@ -210,6 +211,20 @@ class QuantumEvolutionaryOptimizer:
         blocks here -- which reliably reaches feasibility across many routes
         where waiting for one lucky individual would not.
 
+        This is done separately for EACH objective (fuel, CO2e, cost), not
+        just once: tracking a single "best per route" (originally by fuel
+        alone) gives the archive a fast, reliable path to a low-fuel/
+        low-emissions composite every generation, but no equivalent directed
+        pressure toward low-cost solutions specifically -- fuel and cost are
+        not tightly correlated here (cost also carries the charter/day-rate
+        component, which scales with vessel count/size, not fuel burn).
+        Empirically, that gap was real: against a scenario where the greedy
+        baseline achieves ~$9.9M, a fuel-only composite left even the
+        archive's cheapest solution at ~$14.8M at default settings, closing
+        only slowly with more generations (~$11.1M at 150 gens) and never
+        fully catching up. Building one composite per objective closes this
+        by giving cost the same directed search pressure fuel already had.
+
         2. A "catastrophe" operator. Once the archive DOES hold a leader (or
         collapses to one), every individual rotates toward that same leader
         every generation, converging the whole population onto one point. This
@@ -227,7 +242,9 @@ class QuantumEvolutionaryOptimizer:
 
         best_score_ever: tuple[float, float] | None = None
         stagnant_generations = 0
-        best_by_route: dict[str, tuple[tuple[float, float], tuple, Objectives]] = {}
+        # One independent per-route "best" tracker per objective -- see the
+        # docstring above for why a single fuel-only tracker isn't enough.
+        best_by_route: dict[str, dict[str, tuple[tuple[float, float], tuple, Objectives]]] = {key: {} for key in OBJECTIVE_KEYS}
         reference_point: np.ndarray | None = None
 
         for gen in range(self.n_generations):
@@ -237,17 +254,21 @@ class QuantumEvolutionaryOptimizer:
 
                 for route_idx, route in enumerate(routes):
                     route_obj = by_route[route.route_id]
-                    score = (route_obj.violation, route_obj.fuel_tonnes)
-                    if route.route_id not in best_by_route or score < best_by_route[route.route_id][0]:
-                        route_assignments = plan.assignments[route_idx * n_slots : (route_idx + 1) * n_slots]
-                        best_by_route[route.route_id] = (score, route_assignments, route_obj)
+                    route_assignments = plan.assignments[route_idx * n_slots : (route_idx + 1) * n_slots]
+                    for obj_key in OBJECTIVE_KEYS:
+                        bucket = best_by_route[obj_key]
+                        score = (route_obj.violation, getattr(route_obj, obj_key))
+                        if route.route_id not in bucket or score < bucket[route.route_id][0]:
+                            bucket[route.route_id] = (score, route_assignments, route_obj)
 
                 archive.try_add(plan, _aggregate_objectives(by_route))
 
-            if len(best_by_route) == len(routes):
-                composite_assignments = tuple(a for route in routes for a in best_by_route[route.route_id][1])
-                composite_by_route = {route.route_id: best_by_route[route.route_id][2] for route in routes}
-                archive.try_add(FleetPlan(assignments=composite_assignments), _aggregate_objectives(composite_by_route))
+            for obj_key in OBJECTIVE_KEYS:
+                bucket = best_by_route[obj_key]
+                if len(bucket) == len(routes):
+                    composite_assignments = tuple(a for route in routes for a in bucket[route.route_id][1])
+                    composite_by_route = {route.route_id: bucket[route.route_id][2] for route in routes}
+                    archive.try_add(FleetPlan(assignments=composite_assignments), _aggregate_objectives(composite_by_route))
 
             min_violation = min(e.objectives.violation for e in archive.entries)
             reference_point = update_reference_point(reference_point, archive)

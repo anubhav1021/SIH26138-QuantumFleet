@@ -11,6 +11,11 @@ data/synthetic/*
 results/*
 !results/.gitkeep
 
+# User-created scenarios/vessels (dashboard writes these at runtime;
+# built-ins under configs/ are the only ones tracked in git)
+configs/user_scenarios/
+configs/user_vessels.yaml
+
 .streamlit/
 *.log
 .DS_Store

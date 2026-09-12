@@ -131,10 +131,40 @@ single point well before a good region of the search space is explored.
    route to be simultaneously lucky within a single individual. Without this mechanism, empirical
    testing showed feasibility became unreliable beyond 2-3 simultaneous routes; with it, the full
    50-route case study reliably reaches many feasible, non-dominated plans.
+
+   This tracking runs **separately for each objective** (fuel, CO2e, cost), not once. An earlier
+   version tracked a single best-per-route (by fuel), which gave fast, reliable low-fuel/
+   low-emissions composites but no equivalent directed pressure toward low-cost solutions
+   specifically -- fuel and cost aren't tightly correlated here (cost also carries the vessel
+   charter/day-rate component, which scales with count and vessel size, not fuel burn). This was
+   caught empirically, not by inspection: against `default_scenario.yaml`, where the greedy
+   baseline achieves ~$9.9M, the fuel-only version left even the archive's *cheapest* solution at
+   ~$14.8M at default dashboard settings (40 population / 50 generations), closing only slowly
+   with more search (~$11.1M at 150 generations) and never catching up. Tracking one composite per
+   objective closed most of this gap immediately (~$11.0M at 50 generations, ~$10.2M at 150) and
+   nearly doubled the number of feasible archive entries found at the same budget.
 2. **Catastrophe operator.** When the best (min-violation, then max-hypervolume) score hasn't
    improved for `stagnation_patience` generations, a fraction of the population is reinitialized
    to fresh full superposition, reintroducing diversity. This is a standard, documented QEA
    technique (present in Han & Kim's original formulation) for exactly this failure mode.
+
+### 3.5 An honest limit: small, single-vessel-sufficient scenarios favor greedy on raw cost
+
+Even after the fix above, the QEA does not reliably beat the greedy heuristic's raw cost on
+`default_scenario.yaml` (8 routes) -- it gets close (within ~2-12% at 50-150 generations) but the
+greedy baseline can still come out cheaper. This is expected, not a bug: greedy performs an
+**exhaustive** per-route search over a small, fully enumerable option space (every vessel class x
+fuel x speed x shore-power combination), which is close to optimal whenever a single vessel type
+per route genuinely suffices -- true for most routes at this scale. A stochastic search has no
+structural reason to beat brute force on a problem small enough to brute-force.
+
+The QEA's real, demonstrated advantages are elsewhome: reliability of finding *any* feasible
+solution as route count and constraint tightness grow (Deliverable 5's benchmark shows the
+classical GA and random search finding zero feasible solutions on instances where the QEA finds
+many), and the ability to represent **mixed-fleet** solutions (multiple vessel/fuel combinations
+serving one route) that a single-vessel-type greedy heuristic cannot express at all. The
+Benchmarking tab and case study report both surface the baseline comparison honestly, including
+when the baseline wins on a given metric, rather than only reporting favorable comparisons.
 
 ## 4. Benchmarking design (Deliverable 5)
 
