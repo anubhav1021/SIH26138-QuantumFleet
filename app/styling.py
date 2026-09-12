@@ -208,11 +208,21 @@ def apply_professional_styling():
         [data-testid="stNumberInput"] input,
         [data-testid="stSelectbox"] select,
         [data-testid="stTextArea"] textarea {{
+            background-color: #FFFFFF !important;
+            color: {COLORS["text"]} !important;
             border-radius: 8px !important;
             border: 2px solid {COLORS["border"]} !important;
             padding: 0.75rem 1rem !important;
             font-family: 'Inter', sans-serif !important;
+            font-size: 14px !important;
             transition: all 0.3s ease !important;
+        }}
+
+        [data-testid="stTextInput"] input::placeholder,
+        [data-testid="stNumberInput"] input::placeholder,
+        [data-testid="stTextArea"] textarea::placeholder {{
+            color: {COLORS["text_light"]} !important;
+            opacity: 0.7 !important;
         }}
 
         [data-testid="stTextInput"] input:focus,
@@ -220,7 +230,8 @@ def apply_professional_styling():
         [data-testid="stSelectbox"] select:focus,
         [data-testid="stTextArea"] textarea:focus {{
             border-color: {COLORS["primary"]} !important;
-            box-shadow: 0 0 0 3px rgba({int("0F", 16)}, {int("2A", 16)}, {int("3D", 16)}, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(0, 153, 255, 0.1) !important;
+            background-color: #FFFFFF !important;
         }}
 
         /* ==================== METRIC STYLING ==================== */
