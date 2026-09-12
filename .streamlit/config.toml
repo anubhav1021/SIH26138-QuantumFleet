@@ -1,0 +1,57 @@
+[theme]
+# Only [theme] is defined (no [theme.light]/[theme.dark]) so the app is locked
+# to this one look. Deliberate for a demo: judges see exactly what was designed
+# regardless of their OS dark-mode setting.
+base = "light"
+
+primaryColor = "#2A7A5E"
+backgroundColor = "#FAF8F3"
+secondaryBackgroundColor = "#EFEAE0"
+textColor = "#13293D"
+
+linkColor = "#2A7A5E"
+linkUnderline = false
+borderColor = "#D8D0C0"
+codeBackgroundColor = "#EFEAE0"
+codeTextColor = "#13293D"
+
+font = "'Fira Sans':https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap"
+headingFont = "'Fira Sans':https://fonts.googleapis.com/css2?family=Fira+Sans:wght@500;600;700&display=swap"
+codeFont = "'Fira Code':https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap"
+
+baseFontSize = 14
+baseFontWeight = 400
+codeFontSize = "0.85rem"
+headingFontSizes = ["30px", "23px", "19px", "16px", "14px", "13px"]
+headingFontWeights = [600, 600, 600, 600, 500, 500]
+
+baseRadius = "6px"
+buttonRadius = "6px"
+showWidgetBorder = true
+showSidebarBorder = true
+
+# Brand-derived series colors so Plotly/Altair charts stop using default blues
+# that clash with the palette. Ordered so the first two differ in lightness as
+# well as hue (not distinguishable by hue alone).
+chartCategoricalColors = ["#2A7A5E", "#13293D", "#D6A34C", "#5B8FA8", "#A8577A", "#8A6D3B", "#6B7280"]
+chartSequentialColors = ["#F1F7F4", "#DCEBE4", "#C0DBCF", "#9FC8B7", "#7BB39C", "#5A9C81", "#418569", "#2A7A5E", "#1E5C46", "#123A2C"]
+
+dataframeHeaderBackgroundColor = "#EFEAE0"
+dataframeBorderColor = "#D8D0C0"
+
+greenColor = "#2A7A5E"
+yellowColor = "#D6A34C"
+orangeColor = "#B5762A"
+redColor = "#B23A2F"
+blueColor = "#2C5F7C"
+violetColor = "#6B4E71"
+grayColor = "#5A5F66"
+
+# Sidebar sits one layer deeper than the page, its own widgets one deeper again.
+[theme.sidebar]
+backgroundColor = "#EFEAE0"
+secondaryBackgroundColor = "#E3DBCC"
+codeBackgroundColor = "#E3DBCC"
+textColor = "#13293D"
+borderColor = "#D3C9B6"
+primaryColor = "#2A7A5E"

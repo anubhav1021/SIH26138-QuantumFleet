@@ -16,7 +16,9 @@ results/*
 configs/user_scenarios/
 configs/user_vessels.yaml
 
-.streamlit/
+# Only secrets are ignored here -- .streamlit/config.toml carries the app theme
+# and must be committed, or Streamlit Cloud deploys an unthemed app.
+.streamlit/secrets.toml
 *.log
 .DS_Store
 
