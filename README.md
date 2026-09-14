@@ -1,5 +1,5 @@
 # Quantum-Inspired Fuel Consumption Prediction & Green Fleet Optimization
-
+live at : https://quantumfleet-sih26138.streamlit.app/
 Smart India Hackathon problem statement **SIH26138**. A software platform for predicting vessel
 fuel consumption and optimizing green fleet deployment -- vessel mix, capacity, cruising speed,
 alternative fuels (LNG, methanol, hydrogen, ammonia), and shore power -- using a quantum-inspired
